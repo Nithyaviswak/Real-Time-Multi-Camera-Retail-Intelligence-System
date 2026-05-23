@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "Bash(python scripts/demo.py --duration 10)",
+      "Bash(python scripts/benchmark.py)",
+      "Bash(npm install *)",
+      "Bash(npm run *)"
+    ]
+  }
+}

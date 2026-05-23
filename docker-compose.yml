@@ -1,0 +1,205 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: retail_postgres
+    environment:
+      POSTGRES_USER: retail
+      POSTGRES_PASSWORD: retail123
+      POSTGRES_DB: retail_intel
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U retail"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: retail_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Kafka + Zookeeper
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: retail_zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: retail_kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  # Stream Manager Service
+  stream_manager:
+    build:
+      context: ./backend
+      dockerfile: stream_manager/Dockerfile
+    container_name: retail_stream_manager
+    ports:
+      - "8002:8002"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - RTSP_STREAMS=${RTSP_STREAMS}
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+
+  # Detection Service (YOLOv11)
+  detection_service:
+    build:
+      context: ./backend
+      dockerfile: detection_service/Dockerfile
+    container_name: retail_detection
+    ports:
+      - "8003:8003"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - DETECTION_MODEL=${DETECTION_MODEL}
+      - DETECTION_CONFIDENCE=${DETECTION_CONFIDENCE}
+      - USE_CUDA=${USE_CUDA}
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    volumes:
+      - ./models:/app/models
+
+  # Tracking Service (ByteTrack)
+  tracking_service:
+    build:
+      context: ./backend
+      dockerfile: tracking_service/Dockerfile
+    container_name: retail_tracking
+    ports:
+      - "8004:8004"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - TRACKING_IOU=${TRACKING_IOU}
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  # Analytics Service
+  analytics_service:
+    build:
+      context: ./backend
+      dockerfile: analytics_service/Dockerfile
+    container_name: retail_analytics
+    ports:
+      - "8005:8005"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=retail
+      - POSTGRES_PASSWORD=retail123
+      - POSTGRES_DB=retail_intel
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  # Alert Service
+  alert_service:
+    build:
+      context: ./backend
+      dockerfile: alert_service/Dockerfile
+    container_name: retail_alerts
+    ports:
+      - "8006:8006"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  # API Gateway (FastAPI + WebSocket)
+  api_gateway:
+    build:
+      context: ./backend
+      dockerfile: api_gateway/Dockerfile
+    container_name: retail_api
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=retail
+      - POSTGRES_PASSWORD=retail123
+      - POSTGRES_DB=retail_intel
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  # Frontend Dashboard
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: retail_frontend
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_API_URL=http://api-gateway:8000
+      - VITE_WS_URL=ws://api-gateway:8001
+    depends_on:
+      - api_gateway
+
+volumes:
+  postgres_data:
