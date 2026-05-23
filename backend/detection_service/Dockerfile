@@ -10,11 +10,11 @@ RUN apt-get update && apt-get install -y \
     libxrender-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY detection_service/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
 EXPOSE 8003
 
-CMD ["python", "main.py"]
+CMD ["python", "detection_service/main.py"]
