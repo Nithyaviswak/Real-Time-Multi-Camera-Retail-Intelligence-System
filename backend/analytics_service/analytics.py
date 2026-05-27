@@ -1,4 +1,5 @@
 import numpy as np
+import cv2
 from typing import List, Dict, Tuple, Optional
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -241,8 +242,6 @@ class ShelfInteractionTracker:
         """Get interaction counts by shelf."""
         return self.interactions.copy()
 
-
-import cv2
 
 
 class AnalyticsEngine:

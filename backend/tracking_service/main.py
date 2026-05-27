@@ -9,7 +9,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from common.config import settings
 from common.utils import get_logger
-from tracker import MultiCameraTracker, ByteTracker
+from tracking_service.tracker import MultiCameraTracker, ByteTracker
 from common.models import Detection
 
 logger = get_logger(__name__)

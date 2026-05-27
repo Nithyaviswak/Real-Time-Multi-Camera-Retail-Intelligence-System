@@ -36,7 +36,6 @@ class Settings(BaseSettings):
     # API
     api_host: str = "0.0.0.0"
     api_port: int = 8000
-    ws_port: int = 8001
 
     # Frontend (not used by backend, but in .env)
     vite_api_url: Optional[str] = None

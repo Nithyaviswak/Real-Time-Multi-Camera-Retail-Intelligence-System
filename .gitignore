@@ -1,4 +1,36 @@
+# Environment
 .env
-node_modules/
+.env.*
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Node
+node_modules/
+dist/
+
+# Models
+models/*.pt
+models/*.onnx
+models/*.engine
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+
+# Data
+data/*.json
+data/*.csv

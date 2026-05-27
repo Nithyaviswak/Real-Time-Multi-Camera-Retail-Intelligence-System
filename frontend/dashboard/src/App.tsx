@@ -34,7 +34,7 @@ function App() {
   const [selectedCamera, setSelectedCamera] = useState('cam_01')
 
   useEffect(() => {
-    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8001'
+    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000'
     let ws: WebSocket | null = null
     let reconnectTimer: number
 

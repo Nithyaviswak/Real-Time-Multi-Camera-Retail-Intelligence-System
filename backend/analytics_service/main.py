@@ -8,7 +8,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from common.config import settings
 from common.utils import get_logger
-from analytics import AnalyticsEngine
+from analytics_service.analytics import AnalyticsEngine
 from common.models import TrackedObject
 
 logger = get_logger(__name__)

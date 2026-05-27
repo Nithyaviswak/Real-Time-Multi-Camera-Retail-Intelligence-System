@@ -141,9 +141,10 @@ def create_heatmap(
     """Create heatmap from points using Gaussian blur."""
     heatmap = np.zeros((height, width), dtype=np.float32)
 
-    for x, y in map(int, points):
-        if 0 <= x < width and 0 <= y < height:
-            cv2.circle(heatmap, (x, y), radius, 1, -1)
+    for x, y in points:
+        ix, iy = int(x), int(y)
+        if 0 <= ix < width and 0 <= iy < height:
+            cv2.circle(heatmap, (ix, iy), radius, 1, -1)
 
     if blur > 0:
         heatmap = cv2.GaussianBlur(heatmap, (blur, blur), 0)

@@ -9,7 +9,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from common.config import settings
 from common.utils import get_logger
-from detector import create_detector
+from detection_service.detector import create_detector
 
 logger = get_logger(__name__)
 

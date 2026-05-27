@@ -65,8 +65,12 @@ connection_manager = ConnectionManager()
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     logger.info("Starting API Gateway")
+    metrics_task = asyncio.create_task(broadcast_metrics())
+    alerts_task = asyncio.create_task(broadcast_alerts())
     yield
     logger.info("Shutting down API Gateway")
+    metrics_task.cancel()
+    alerts_task.cancel()
 
 
 app = FastAPI(
@@ -315,8 +319,3 @@ async def broadcast_alerts():
         await asyncio.sleep(2)
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Start background tasks."""
-    asyncio.create_task(broadcast_metrics())
-    asyncio.create_task(broadcast_alerts())

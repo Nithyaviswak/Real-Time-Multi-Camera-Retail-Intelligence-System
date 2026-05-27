@@ -8,7 +8,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from common.config import settings
 from common.utils import get_logger
-from detector import AnomalyDetector, QueueAlertMonitor
+from alert_service.detector import AnomalyDetector, QueueAlertMonitor
 from common.models import TrackedObject
 
 logger = get_logger(__name__)
